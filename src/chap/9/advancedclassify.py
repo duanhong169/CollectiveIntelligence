@@ -52,6 +52,9 @@ def lineartrain(rows):
 def dotproduct(v1,v2):
     return sum([v1[i]*v2[i] for i in range(len(v1))])
 
+def veclength(v):
+    return sum([p**2 for p in v])
+
 def dpclassify(point,avgs):
     b=(dotproduct(avgs[1],avgs[1])-dotproduct(avgs[0],avgs[0]))/2
     y=dotproduct(point,avgs[0])-dotproduct(point,avgs[1])+b
@@ -74,18 +77,19 @@ def matchcount(interest1,interest2):
 #def milesdistance(a1,a2):
 #    return 0
 
-baidukey="b2fb7564a3286f30cae86464f7985e2e"
+#baidukey="b2fb7564a3286f30cae86464f7985e2e"
 from xml.dom.minidom import parseString
 from urllib import urlopen,quote_plus
 
 loc_cache={}
 def getlocation(address):
     if address in loc_cache: return loc_cache[address]
-    data=urlopen('http://api.map.baidu.com/geocoder?address=%s&output=xml&key=%s' % (quote_plus(address),baidukey)).read()
+#    data=urlopen('http://api.map.baidu.com/geocoder?address=%s&output=xml&key=%s' % (quote_plus(address),baidukey)).read()
+    data=urlopen('http://maps.googleapis.com/maps/api/geocode/xml?address=%s&sensor=false' % (quote_plus(address))).read()
     doc=parseString(data)
     lat=doc.getElementsByTagName('lat')[0].firstChild.nodeValue
-    long=doc.getElementsByTagName('lng')[0].firstChild.nodeValue
-    loc_cache[address]=(float(lat),float(long))
+    lng=doc.getElementsByTagName('lng')[0].firstChild.nodeValue
+    loc_cache[address]=(float(lat),float(lng))
     return loc_cache[address]
 
 def milesdistance(a1,a2):
@@ -95,3 +99,62 @@ def milesdistance(a1,a2):
     longdif=53.0*(long2-long1)
     return (latdif**2+longdif**2)**.5
 
+def loadnumerical():
+    oldrows=loadmatch('matchmaker.csv')
+    newrows=[]
+    for row in oldrows:
+        d=row.data
+        data=[float(d[0]),yesno(d[1]),yesno(d[2]),float(d[5]),yesno(d[6]),yesno(d[7]),matchcount(d[3],d[8]),milesdistance(d[4],d[9]),row.match]
+        newrows.append(matchrow(data))
+    return newrows
+
+def scaledata(rows):
+    low=[999999999.0]*len(rows[0].data)
+    high=[-999999999.0]*len(rows[0].data)
+    
+    for row in rows:
+        d=row.data
+        for i in range(len(d)):
+            if d[i]<low[i]: low[i]=d[i]
+            if d[i]>high[i]: high[i]=d[i]
+            
+    def scaleinput(d):
+        return [(d[i]-low[i])/(high[i]-low[i]) for i in range(len(low))]
+    
+    newrows=[matchrow(scaleinput(row.data) + [row.match]) for row in rows]
+    
+    return newrows,scaleinput
+
+def rbf(v1,v2,gamma=20):
+    dv=[v1[i]-v2[i] for i in range(len(v1))]
+    l=veclength(dv)
+    return math.e**(-gamma*l)
+
+def nlclassify(point,rows,offset,gamma=10):
+    sum0=0.0
+    sum1=0.0
+    count0=0
+    count1=0
+    
+    for row in rows:
+        if row.match==0:
+            sum0+=rbf(point,row.data,gamma)
+            count0+=1
+        else:
+            sum1+=rbf(point,row.data,gamma)
+            count1+=1
+    y=(1.0/count0)*sum0-(1.0/count1)*sum1+offset
+    
+    if y>0: return 0
+    else: return 1
+    
+def getoffset(rows,gamma=10):
+    l0=[]
+    l1=[]
+    for row in rows:
+        if row.match==0: l0.append(row.data)
+        else: l1.append(row.data)
+    sum0=sum(sum([rbf(v1,v2,gamma) for v1 in l0]) for v2 in l0)
+    sum1=sum(sum([rbf(v1,v2,gamma) for v1 in l1]) for v2 in l1)
+    
+    return (1.0/(len(l1)**2))*sum1-(1.0/(len(l0)**2))*sum0
