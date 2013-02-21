@@ -134,3 +134,32 @@ def testmethod():
             data=data+[predict]
             print data
     print 'total:%d, matched:%d' % (len(oldrows),matchedcount)
+    
+def matchformentee():
+    mentees=[line for line in file('mentee-dataset.csv')]
+    mentors=[line for line in file('mentor-dataset.csv')]
+    menteeid=1
+    cannotmatch=0
+    numericalset=loadnumerical()
+    scaledset,scalef=scaledata(numericalset)
+    ssoffset=getoffset(scaledset)
+    for mentee in mentees:
+        
+        matches=[mentor.strip('\n')+','+mentee for mentor in mentors]
+        rows=[]
+        for match in matches:
+            rows.append(unmatchrow(match.split(',')))
+
+        matchedcount=0
+        for row in rows:
+            d=row.data
+            data=[float(d[0]),sex(d[1]),level(d[2]),yesno(d[3]),float(d[4]),float(d[6]),sex(d[7]),yesno(d[8]),float(d[9]),milesdistance(d[5],d[10])]
+            predict = nlclassify(scalef(data), scaledset, ssoffset)
+            if predict==1:
+                matchedcount+=1
+                data=data+[predict]
+                #print data
+        print 'id:%d, matched:%d' % (menteeid,matchedcount)
+        if matchedcount==0: cannotmatch+=1
+        menteeid+=1
+    print 'total %d mentees matched 0 mentor' % cannotmatch
