@@ -20,6 +20,16 @@ def loadmatch(f,allnum=False):
         rows.append(matchrow(line.split(','),allnum))
     return rows
 
+class unmatchrow:
+    def __init__(self,row):
+        self.data=row
+
+def loadunmatch(f,allnum=False):
+    rows=[]
+    for line in file(f):
+        rows.append(unmatchrow(line.split(',')))
+    return rows
+
 def dotproduct(v1,v2):
     return sum([v1[i]*v2[i] for i in range(len(v1))])
 
@@ -108,3 +118,19 @@ def getoffset(rows,gamma=10):
     sum1=sum(sum([rbf(v1,v2,gamma) for v1 in l1]) for v2 in l1)
     
     return (1.0/(len(l1)**2))*sum1-(1.0/(len(l0)**2))*sum0
+
+def testmethod():
+    oldrows=loadunmatch('unmatched-dataset.csv')
+    numericalset=loadnumerical()
+    scaledset,scalef=scaledata(numericalset)
+    ssoffset=getoffset(scaledset)
+    matchedcount=0
+    for row in oldrows:
+        d=row.data
+        data=[float(d[0]),sex(d[1]),level(d[2]),yesno(d[3]),float(d[4]),float(d[6]),sex(d[7]),yesno(d[8]),float(d[9]),milesdistance(d[5],d[10])]
+        predict = nlclassify(scalef(data), scaledset, ssoffset)
+        if predict==1:
+            matchedcount+=1
+            data=data+[predict]
+            print data
+    print 'total:%d, matched:%d' % (len(oldrows),matchedcount)
