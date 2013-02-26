@@ -24,7 +24,13 @@ def plotagematches(rows):
     xdn,ydn=[r.data[0] for r in rows if r.match==0],[r.data[1] for r in rows if r.match==0]
     
     plot(xdm,ydm,'go')
-    plot(xdn,ydn,'rx')
+    plot(xdn,ydn,'r+')
+    
+    avgs=lineartrain(rows)
+    xavgm,yavgm=avgs[1][0],avgs[1][1]
+    xavgn,yavgn=avgs[0][0],avgs[1][0]
+    plot(xavgm,yavgm,'rx')
+    plot(xavgn,yavgn,'gx')
     
     show()
     
