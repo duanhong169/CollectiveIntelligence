@@ -219,8 +219,23 @@ def matchforonementee(i):
     predict_inputs=[scalef(i) for i in matches]
     predict_answers=[1]*len(predict_inputs)
     p_label, p_acc, p_val=svm_predict(predict_answers,predict_inputs,m,'-b 1')
-    matchedmentors=[i+1 for i in range(len(p_val)) if p_val[i][0]>0.8]
+    matchedmentors=[i for i in range(len(p_val)) if p_val[i][0]>0.8]
     return matchedmentors
+
+def predictonematch(mentorid,menteeid):
+    m = svm_load_model('match.model')
+    numericalset=loadnumerical()
+    scalef=scaledata(numericalset)[1]
+    mentees=[line for line in file('mentee-dataset.csv')]
+    mentors=[line for line in file('mentor-dataset.csv')]
+    mentor=mentors[mentorid]
+    mentee=mentees[menteeid]
+    match=mentor.strip('\n')+','+mentee
+    predict_inputs=[scalef(getnumericalunmatch(match))]
+    predict_answers=[1]
+    p_val=svm_predict(predict_answers,predict_inputs,m,'-b 1')[2]
+    matched=1 if p_val[0][0]>0.8 else 0
+    print p_val
     
 def matchstatistics():
     m = svm_load_model('match.model')
@@ -236,7 +251,7 @@ def matchstatistics():
         predict_inputs=[scalef(i) for i in matches]
         predict_answers=[1]*len(predict_inputs)
         p_label, p_acc, p_val=svm_predict(predict_answers,predict_inputs,m,'-b 1')
-        matchedmentors=[i+1 for i in range(len(p_val)) if p_val[i][0]>0.7]
+        matchedmentors=[i for i in range(len(p_val)) if p_val[i][0]>0.8]
         nummatched=len(matchedmentors)
         #print 'id:%d, matched:%d mentors' % (menteeid,nummatched)
         #print nummatched
