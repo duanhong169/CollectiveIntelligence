@@ -5,6 +5,7 @@ Created on 2013-2-20
 @author: duanhong
 '''
 from numpy import *
+from svmutil import *
 
 class matchrow:
     def __init__(self,row,allnum=False):
@@ -46,10 +47,10 @@ def yesno(v):
     else: return 0
 
 def level(s):
-    if s==(u'高中').encode('gbk'): return 1
-    elif s==(u'专科').encode('gbk'): return 2
-    elif s==(u'本科').encode('gbk'): return 3
-    elif s==(u'研究生').encode('gbk'): return 4
+    if s==(u'高中').encode('gbk'): return 1.0
+    elif s==(u'专科').encode('gbk'): return 2.0
+    elif s==(u'本科').encode('gbk'): return 3.0
+    elif s==(u'研究生').encode('gbk'): return 4.0
     else: return 0
     
 def milesdistance(a1,a2):
@@ -67,7 +68,17 @@ def loadnumerical():
         data=[float(d[0]),sex(d[1]),level(d[2]),yesno(d[3]),float(d[4]),float(d[6]),sex(d[7]),yesno(d[8]),float(d[9]),milesdistance(d[5],d[10]),row.match]
         newrows.append(matchrow(data))
     return newrows
-
+    
+def loadnumericalunmatch():
+    oldrows=loadunmatch('unmatched-dataset.csv')
+    newrows=[]
+    for row in oldrows:
+        d=row.data
+        data=[float(d[0]),sex(d[1]),level(d[2]),yesno(d[3]),float(d[4]),float(d[6]),sex(d[7]),yesno(d[8]),float(d[9]),milesdistance(d[5],d[10])]
+        #newrows.append(unmatchrow(data))
+        newrows.append(data)
+    return newrows
+   
 def scaledata(rows):
     low=[999999999.0]*len(rows[0].data)
     high=[-999999999.0]*len(rows[0].data)
@@ -77,7 +88,7 @@ def scaledata(rows):
         for i in range(len(d)):
             if d[i]<low[i]: low[i]=d[i]
             if d[i]>high[i]: high[i]=d[i]
-            
+        
     def scaleinput(d):
         return [(d[i]-low[i])/(high[i]-low[i]) for i in range(len(low))]
     
@@ -163,3 +174,28 @@ def matchformentee():
         if matchedcount==0: cannotmatch+=1
         menteeid+=1
     print 'total %d mentees matched 0 mentor' % cannotmatch
+    
+def genlibsvmdataset(fileIn,fileOut):
+    outputfile = file(fileOut,'w')
+    oldrows = loadmatch(fileIn)
+    numericalset=loadnumerical()
+    scaledset,scalef=scaledata(numericalset)
+    for row in oldrows:
+        d=row.data
+        m=row.match
+        data=[float(d[0]),sex(d[1]),level(d[2]),yesno(d[3]),float(d[4]),float(d[6]),sex(d[7]),yesno(d[8]),float(d[9]),milesdistance(d[5],d[10])]
+        data=scalef(data)
+        outputfile.write(str(m) + ' ' + ' '.join([str(i+1)+':'+ str(data[i]) for i in range(len(data))]) + '\n')
+    outputfile.close()
+    
+def easyrun():
+    numericalset=loadnumerical()
+    scaledset,scalef=scaledata(numericalset)
+    answers,inputs=[r.match for r in scaledset],[r.data for r in scaledset]
+    param = svm_parameter('-t 2 -c 65536 -g 0.0078125 -b 1')
+    prob = svm_problem(answers,inputs)
+    m = svm_train(prob,param)
+    predict_inputs=loadnumericalunmatch()
+    predict_inputs=[scalef(i) for i in predict_inputs]
+    predict_answers=[1]*len(predict_inputs)
+    p_label, p_acc, p_val=svm_predict(predict_answers,predict_inputs,m,'-b 1')
