@@ -190,12 +190,56 @@ def genlibsvmdataset(fileIn,fileOut):
     
 def easyrun():
     numericalset=loadnumerical()
-    scaledset,scalef=scaledata(numericalset)
+    scaledset=scaledata(numericalset)[0]
     answers,inputs=[r.match for r in scaledset],[r.data for r in scaledset]
     param = svm_parameter('-t 2 -c 65536 -g 0.0078125 -b 1')
     prob = svm_problem(answers,inputs)
     m = svm_train(prob,param)
-    predict_inputs=loadnumericalunmatch()
-    predict_inputs=[scalef(i) for i in predict_inputs]
+    #predict_inputs=loadnumericalunmatch()
+    #predict_inputs=[scalef(i) for i in predict_inputs]
+    #predict_answers=[1]*len(predict_inputs)
+    #p_label, p_acc, p_val=svm_predict(predict_answers,predict_inputs,m,'-b 1')
+    svm_save_model('match.model', m)
+    return m
+
+def getnumericalunmatch(rawunmatch):
+    d=rawunmatch.split(',')
+    data=[float(d[0]),sex(d[1]),level(d[2]),yesno(d[3]),float(d[4]),float(d[6]),sex(d[7]),yesno(d[8]),float(d[9]),milesdistance(d[5],d[10])]
+    return data
+    
+def matchforonementee(i):
+    mentees=[line for line in file('mentee-dataset.csv')]
+    mentors=[line for line in file('mentor-dataset.csv')]
+    mentee=mentees[i]
+    matches=[mentor.strip('\n')+','+mentee for mentor in mentors]
+    matches=[getnumericalunmatch(rawunmatch) for rawunmatch in matches]
+    m = svm_load_model('match.model')
+    numericalset=loadnumerical()
+    scalef=scaledata(numericalset)[1]
+    predict_inputs=[scalef(i) for i in matches]
     predict_answers=[1]*len(predict_inputs)
     p_label, p_acc, p_val=svm_predict(predict_answers,predict_inputs,m,'-b 1')
+    matchedmentors=[i+1 for i in range(len(p_val)) if p_val[i][0]>0.8]
+    return matchedmentors
+    
+def matchstatistics():
+    m = svm_load_model('match.model')
+    numericalset=loadnumerical()
+    scalef=scaledata(numericalset)[1]
+    mentees=[line for line in file('mentee-dataset.csv')]
+    mentors=[line for line in file('mentor-dataset.csv')]
+    menteeid=1
+    matchedtotal=0
+    for mentee in mentees:
+        matches=[mentor.strip('\n')+','+mentee for mentor in mentors]
+        matches=[getnumericalunmatch(rawunmatch) for rawunmatch in matches]
+        predict_inputs=[scalef(i) for i in matches]
+        predict_answers=[1]*len(predict_inputs)
+        p_label, p_acc, p_val=svm_predict(predict_answers,predict_inputs,m,'-b 1')
+        matchedmentors=[i+1 for i in range(len(p_val)) if p_val[i][0]>0.7]
+        nummatched=len(matchedmentors)
+        #print 'id:%d, matched:%d mentors' % (menteeid,nummatched)
+        #print nummatched
+        matchedtotal+=nummatched
+        menteeid+=1
+    print matchedtotal
