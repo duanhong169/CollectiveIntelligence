@@ -6,6 +6,7 @@ Created on 2013-2-20
 '''
 from numpy import *
 from svmutil import *
+from math import pow
 
 class matchrow:
     def __init__(self,row,allnum=False):
@@ -188,11 +189,11 @@ def genlibsvmdataset(fileIn,fileOut):
         outputfile.write(str(m) + ' ' + ' '.join([str(i+1)+':'+ str(data[i]) for i in range(len(data))]) + '\n')
     outputfile.close()
     
-def easyrun():
+def easyrun(c,g):
     numericalset=loadnumerical()
     scaledset=scaledata(numericalset)[0]
     answers,inputs=[r.match for r in scaledset],[r.data for r in scaledset]
-    param = svm_parameter('-t 2 -c 65536 -g 0.0078125 -b 1')
+    param = svm_parameter('-t 2 -c ' + str(c) + ' -g ' + str(g) + ' -b 1')
     prob = svm_problem(answers,inputs)
     m = svm_train(prob,param)
     #predict_inputs=loadnumericalunmatch()
@@ -202,6 +203,17 @@ def easyrun():
     svm_save_model('match.model', m)
     return m
 
+def test():
+    out = file('testresults.csv','w')
+    for c in range(-5,15,2):
+        for g in range(3,-15,-2):
+            m=easyrun(pow(2,c),pow(2,g))
+            y,x=svm_read_problem('train.csv')
+            p_labels=svm_predict(y,x,m)[0]
+            (ACC, MSE, SCC) = evaluations(y,p_labels)
+            out.write(str(c) + "," + str(g) + "," + str(m.l) + "," + str(round(ACC,3)) + "," + str(round(MSE,3)) + "," + str(round(SCC,3)) + '\n')
+    
+    
 def getnumericalunmatch(rawunmatch):
     d=rawunmatch.split(',')
     data=[float(d[0]),sex(d[1]),level(d[2]),yesno(d[3]),float(d[4]),float(d[6]),sex(d[7]),yesno(d[8]),float(d[9]),milesdistance(d[5],d[10])]
