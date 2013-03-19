@@ -87,7 +87,7 @@ def hillclimb(domain, costf):
             if sol[j]>domain[j][0]:
                 neighbors.append(sol[0:j] + [sol[j]-1] + sol[j+1:])
             if sol[j]<domain[j][1]:
-                neighbors.append(sol[0:j] + [sol[j]-1] + sol[j+1:])
+                neighbors.append(sol[0:j] + [sol[j]+1] + sol[j+1:])
                 
         current = costf(sol)
         best = current
@@ -99,3 +99,23 @@ def hillclimb(domain, costf):
                 
         if best == current: break
     return sol
+
+def annealingoptimize(domain, costf, T=10000.0, cool=0.95, step=1):
+    vec = [float(random.randint(domain[i][0], domain[i][1])) for i in range(len(domain))]
+    
+    while T>0.1:
+        i = random.randint(0, len(domain)-1)
+        direction = random.randint(-step, step)
+        vecb = vec[:]
+        vecb[i] += direction
+        if vecb[i] < domain[i][0]: vecb[i] = domain[i][0]
+        elif vecb[i] > domain[i][1]: vecb[i] = domain[i][1]
+        
+        ea = costf(vec)
+        eb = costf(vecb)
+        
+        if(eb < ea or random.random() < pow(math.e, -(eb-ea)/T)):
+            vec = vecb
+            
+        T = T * cool
+    return vec
