@@ -1,4 +1,4 @@
 CollectiveIntelligence
 ======================
 
-sample code of &lt;Programming Collective Intelligence>
+Sample code of &lt;Programming Collective Intelligence>
