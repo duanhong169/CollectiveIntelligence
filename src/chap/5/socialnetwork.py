@@ -41,6 +41,15 @@ def crosscount(v):
             
             if ua>0 and ua<1 and ub>0 and ub<1:
                 total += 1
+                
+    for i in range(len(people)):
+        for j in range(i+1, len(people)):
+            (x1, y1), (x2, y2) = loc[people[i]], loc[people[j]]
+            
+            dist = math.sqrt(math.pow(x1-x2, 2) + math.pow(y1-y2,2))
+            if dist<50:
+                total+=(1.0 - (dist/50.0))
+    
     return total
 
 domain = [(10, 370)]*(len(people)*2)
