@@ -5,6 +5,7 @@ Created on 2013-3-20
 '''
 
 import math
+from PIL import Image,ImageDraw
 
 people = ['Charlie', 'Augustus', 'Veruca', 'Violet', 'Mike', 'Joe', 'Willy', 'Miranda']
 
@@ -43,3 +44,18 @@ def crosscount(v):
     return total
 
 domain = [(10, 370)]*(len(people)*2)
+
+def drawnetwork(sol):
+    img = Image.new('RGB', (400, 400), (255, 255, 255))
+    draw = ImageDraw.Draw(img)
+    
+    pos = dict([(people[i], (sol[i*2], sol[i*2+1])) for i in range(0, len(people))])
+    for (a,b) in links:
+        draw.line((pos[a], pos[b]), fill = (255, 0, 0))
+        
+    for n,p in pos.items():
+        draw.text(p, n, (0, 0, 0))
+        
+    img.save('drawnetwork.jpg', 'JPEG')
+    
+    
