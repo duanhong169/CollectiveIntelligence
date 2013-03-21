@@ -6,6 +6,7 @@ Created on 2013-3-21
 '''
 import re
 import math
+from pysqlite2 import dbapi2 as sqlite
 
 def sampletrain(c1):
     c1.train('Nobody owns the water.', 'good')
@@ -26,37 +27,66 @@ class classifier:
         self.cc = {}
         self.getfeatures = getfeatures
         
-    def incf(self, f, cat):
-        self.fc.setdefault(f, {})
-        self.fc[f].setdefault(cat, 0)
-        self.fc[f][cat] += 1
+    def setdb(self, dbfile):
+        self.con = sqlite.connect(dbfile)
+        self.con.execute('create table if not exists fc(feature, category, count)')
+        self.con.execute('create table if not exists cc(category, count)')
         
-    def incc(self, cat):
-        self.cc.setdefault(cat, 0)
-        self.cc[cat] += 1
+    def incf(self, f, cat):
+#        self.fc.setdefault(f, {})
+#        self.fc[f].setdefault(cat, 0)
+#        self.fc[f][cat] += 1
+        count = self.fcount(f, cat)
+        if count == 0:
+            self.con.execute("insert into fc values ('%s','%s',1)" % (f, cat))
+        else:
+            self.con.execute("update fc set count=%d where feature = '%s' and category = '%s'"
+                             % (count+1, f, cat))
         
     def fcount(self, f, cat):
-        if f in self.fc and cat in self.fc[f]:
-            return float(self.fc[f][cat])
-        return 0.0
-    
+#        if f in self.fc and cat in self.fc[f]:
+#            return float(self.fc[f][cat])
+#        return 0.0
+        res = self.con.execute("select count from fc where feature='%s' and category='%s'"
+                               % (f, cat)).fetchone()
+        if res==None: return 0
+        else: return float(res[0])
+        
+        
+    def incc(self, cat):
+#        self.cc.setdefault(cat, 0)
+#        self.cc[cat] += 1
+        count = self.catcount(cat)
+        if count == 0:
+            self.con.execute("insert into cc values ('%s',1)" % (cat))
+        else:
+            self.con.execute("update cc set count=%d where category='%s'" % (count+1, cat))
+                
     def catcount(self, cat):
-        if cat in self.cc:
-            return float(self.cc[cat])
-        return 0
+#        if cat in self.cc:
+#            return float(self.cc[cat])
+#        return 0
+        res = self.con.execute("select count from cc where category='%s'" % (cat)).fetchone()
+        if res == None: return 0
+        else: return float(res[0])
     
     def totalcount(self):
-        return sum(self.cc.values())
-    
+#        return sum(self.cc.values())
+        res = self.con.execute('select sum(count) from cc').fetchone()
+        if res == None: return 0
+        return res[0]
+        
     def categories(self):
-        return self.cc.keys()
+#        return self.cc.keys()
+        cur = self.con.execute('select category from cc')
+        return [d[0] for d in cur]
     
     def train(self, item, cat):
         features = self.getfeatures(item)
         for f in features:
             self.incf(f, cat)
         self.incc(cat)
-        return features
+        self.con.commit()
     
     # the probability of f exist in cat
     def fprob(self, f, cat):
