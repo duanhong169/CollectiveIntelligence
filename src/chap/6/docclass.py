@@ -57,3 +57,8 @@ class classifier:
             self.incf(f, cat)
         self.incc(cat)
         return features
+    
+    # the probability of f exist in cat
+    def fprob(self, f, cat):
+        if self.catcount(cat) == 0: return 0
+        return self.fcount(f, cat)/self.catcount(cat)
