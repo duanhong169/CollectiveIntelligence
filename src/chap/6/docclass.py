@@ -108,3 +108,13 @@ class naivebayes(classifier):
             if cat == best: continue
             if probs[cat] * self.getthreshold(best) > probs[best]: return default
         return best
+    
+class fisherclassifier(classifier):
+    def cprob(self, f, cat):
+        clf = self.fprob(f, cat)
+        if clf == 0: return 0
+        
+        freqsum = sum([self.fprob(f, c) for c in self.categories()])
+        
+        p = clf/(freqsum)
+        return p
