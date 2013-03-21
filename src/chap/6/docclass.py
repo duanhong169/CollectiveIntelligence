@@ -110,6 +110,17 @@ class naivebayes(classifier):
         return best
     
 class fisherclassifier(classifier):
+    def __init__(self, getfeatures):
+        classifier.__init__(self, getfeatures)
+        self.minimums = {}
+        
+    def setminimum(self, cat, min):
+        self.minimums[cat] = min
+        
+    def getminimum(self, cat):
+        if cat not in self.minimums: return 0
+        return self.minimums[cat]
+    
     def cprob(self, f, cat):
         clf = self.fprob(f, cat)
         if clf == 0: return 0
@@ -137,4 +148,13 @@ class fisherclassifier(classifier):
             term *= m / i
             sum += term
         return min(sum, 1.0)
-        
+    
+    def classify(self, item, default = None):
+        best = default
+        max = 0.0
+        for c in self.categories():
+            p = self.fisherprob(item, c)
+            if p > self.getminimum(c) and p > max:
+                best = c
+                max = p
+        return best        
