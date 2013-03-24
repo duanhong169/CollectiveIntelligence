@@ -20,3 +20,11 @@ my_data = [['slashdot','USA','yes',18,'None'],
            ['slashdot','UK','no',21,'None'],
            ['google','UK','yes',18,'Basic'],
            ['kiwitobes','France','yes',19,'Basic']]
+
+class decisionnode:
+    def __init__(self, col=-1, value=None, results=None, tb=None, fb=None):
+        self.col = col
+        self.value = value
+        self.results = results
+        self.tb = tb
+        self.fb = fb
