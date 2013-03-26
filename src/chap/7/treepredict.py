@@ -59,3 +59,13 @@ def giniimpurity(rows):
             p2 = float(counts[k2]) / total
             imp += p1 * p2
     return imp
+
+def entropy(rows):
+    from math import log
+    log2 = lambda x: log(x)/log(2)
+    results = uniquecounts(rows)
+    ent = 0.0
+    for r in results.keys():
+        p = float(results[r])/len(rows)
+        ent = ent - p * log2(p)
+    return ent
