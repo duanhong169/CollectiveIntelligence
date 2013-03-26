@@ -39,3 +39,12 @@ def divideset(rows, column, value):
     set1 = [row for row in rows if split_function(row)]
     set2 = [row for row in rows if not split_function(row)]
     return (set1, set2)
+
+def uniquecounts(rows):
+    results = {}
+    for row in rows:
+        r = row[len(row) - 1]
+        if r not in results: results[r] = 0
+        results[r] += 1
+    return results
+
