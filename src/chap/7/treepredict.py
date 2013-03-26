@@ -99,3 +99,14 @@ def buildtree(rows, scoref = entropy):
                             tb = trueBranch, fb = falseBranch)
     else:
         return decisionnode(results = uniquecounts(rows))
+    
+def printtree(tree, indent=''):
+    if tree.results != None:
+        print str(tree.results)
+    else:
+        print str(tree.col) + ':' + str(tree.value) + '? '
+        
+        print indent + 'T->',
+        printtree(tree.tb, indent + '  ')
+        print indent + 'F->',
+        printtree(tree.fb, indent + '  ')
