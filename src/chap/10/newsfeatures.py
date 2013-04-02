@@ -40,7 +40,7 @@ def separatewords(text):
     splitter = re.compile('\\W*')
     return [s.lower() for s in splitter.split(text) if len(s) > 3]
 
-def genarticlewords():
+def getarticlewords():
     allwords = {}
     articlewords = []
     articletitles = []
@@ -62,4 +62,15 @@ def genarticlewords():
                 articlewords[ec].setdefault(word, 0)
                 articlewords[ec][word] += 1
             ec += 1
-        return allwords, articlewords, articletitles
+    return allwords, articlewords, articletitles
+    
+def makematrix(allw, articlew):
+    wordvec = []
+    
+    for w, c in allw.items():
+        if c > 3 and c < len(articlew) * 0.6:
+            wordvec.append(w)
+    
+    # 难以理解        
+    l1 = [[(word in f and f[word] or 0) for word in wordvec] for f in articlew]
+    return l1, wordvec
